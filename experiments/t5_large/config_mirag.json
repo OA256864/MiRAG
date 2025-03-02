@@ -1,0 +1,86 @@
+{
+  "monitor_metric":"eval_exact_match",
+  "trainer_kwargs": {
+    "class_name": "RA_Reader"
+  },
+  "trainee_kwargs": {
+    "class_name": "Encoder_Generator",
+    "loss": {"class_name":"NLLLoss"
+            
+            },
+    "freeze_prefixes":[ ],
+           
+    "use_image":true,
+    "encode_image":true,       
+    "quantize":false
+
+  },
+  "data_module_kwargs": {
+    "class_name": "multi_modal_DataModule",
+    "data_processor":{
+                  "class_name": "viquae_data_processor",
+                  "train_path":"../datasets/viquae/train/",
+                  "val_path":"../datasets/viquae/val/",
+                  "test_path":"../datasets/viquae/test/",
+                  "kb_path":"../datasets/viquae/passages/",
+                  "entity_kb_path":"../datasets/viquae/kb/"
+                     },
+    
+    "relevant_indices_key":"BM25_provenance_indices",
+    "irrelevant_indices_key":"BM25_irrelevant_indices",
+    "input_key":"input",
+    "passage_key":"passage",   
+     "dataloader_kwargs": {
+      "num_workers": 6 ,
+      "prefetch_factor": 2
+      },
+     "image_processor_kwargs": {
+       "class_name": "ImageFormatter",
+       "feature_extractor_kwargs":{
+                                 "class_name": "CLIPFeatureExtractor",
+                                 "pretrained_model_name_or_path":"clip-vit-base-patch32"
+                                 }
+                              }
+  },
+  "answer_generator_kwargs": {
+    "class_name": "T5ForConditionalGeneration",
+    "checkpoint_name": "answer_generator",
+    "checkpoint":"saved_models/T5_triviaqa_viquae/model-epoch=08-eval_exact_match=0.7417_sd=32.ckpt",
+    "context_embeddings":"../datasets/viquae/embeddings/dpr/passages/",
+    "title_embeddings":"../datasets/viquae/embeddings/clip/text/kb/",
+    "title_key":"wikipedia_title",
+    "column":"dpr_embedding",
+    "pretrained_model_name_or_path": "t5_large",    
+    "k_train":3,
+    "k_test":5,
+    "k_entities":3,    
+    "entity_grad":false,
+    "rag_training":false,
+    "rag":false,
+    "generator_only":false,
+    "entity_prompt":true,
+    "beam_search":true,
+    "best_answer":false,
+    "best_entity":false,
+    "tokenizer_kwargs": {
+       "class_name": "T5Tokenizer",
+       "pretrained_model_name_or_path":"t5_large"
+      }
+  },
+  "question_model_kwargs": {
+    "class_name": "DPRQuestionEncoder",
+    "checkpoint_name": "question_model",
+    "pretrained_model_name_or_path": "dpr_question_encoder_triviaqa_without_viquae",
+    "checkpoint":"saved_models/DPR_TRIVIAQA_VIQUAE/model-epoch=05-eval_MRR@NM=0.6385_sd=32.ckpt"
+  },
+
+  "image_encoder_kwargs": {
+    "class_name": "CLIP_Image_Encoder",
+    "checkpoint_name": "image_encoder",
+    "checkpoint":"saved_models/CLIP_article/model-epoch=05-eval_MRR@NM_0=0.4627_sd=32.ckpt",
+    "base_encoder_kwargs": {
+       "class_name":"CLIPModel",
+       "pretrained_model_name_or_path":"clip-vit-base-patch32"
+    }
+  }
+}
